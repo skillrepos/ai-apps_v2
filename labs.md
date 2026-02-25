@@ -564,6 +564,259 @@ Tell me about the Southern office
 </p>
 </br></br>
 
+**Lab 6 - Preparing the App for Deployment**
+
+**Purpose: In this lab, we'll make the agent self-contained and deployable by adding an LLM provider abstraction and switching the MCP server from HTTP to stdio transport.**
+
+---
+
+**What the deployable agent does**
+- Introduces an **LLM provider** layer (`llm_provider.py`) that automatically selects the right backend:
+  - **Ollama** when running locally (Codespaces / laptop)
+  - **HuggingFace Inference API** when deployed to HF Spaces (uses `HF_TOKEN`)
+- Rebuilds the agent as a **self-contained** file (`hf_agent.py`) that starts the MCP server as a **subprocess** via stdio transport — no need to launch it separately.
+- Keeps the same TAO loop and RAG search from Lab 5 — the agent logic is unchanged.
+
+**What it demonstrates**
+- **Provider pattern**: A single `get_llm()` function hides the complexity of choosing between local and cloud LLMs — the rest of the code never needs to know which one is running.
+- **Stdio MCP transport**: Instead of running the MCP server separately over HTTP, the agent spawns it as a child process and talks MCP protocol over stdin/stdout. This is the standard production pattern for embedding an MCP server in a deployment.
+- **Async wrapper**: Since the MCP client is async, we wrap the agent loop with `asyncio.run()` to give Gradio a simple synchronous `run_agent()` entry point.
+
+---
+
+### Steps
+
+1. First, we need to install the additional packages for Hugging Face and Gradio support. Run the following command:
+
+```
+pip install huggingface_hub gradio
+```
+
+<br><br>
+
+2. Let's start with the LLM provider — the key piece that lets our app run with either Ollama (local) or HuggingFace (cloud). We have a starter file at [**llm_provider.py**](./llm_provider.py). Open the diff and merge view:
+
+```
+code -d labs/common/lab6_llm_provider_solution.txt llm_provider.py
+```
+
+<br><br>
+
+3. Review each section as you merge. Key things to note:
+   - **HFResponse** class wraps HF API responses to look like LangChain responses
+   - **HFLLMWrapper** class creates a HuggingFace `InferenceClient` and provides the same `.invoke(messages)` interface as ChatOllama
+   - **get_llm()** checks for `HF_TOKEN` in the environment — if found, returns the HF wrapper; otherwise returns ChatOllama
+
+   When finished merging, close the tab to save.
+
+<br><br>
+
+4. Let's test the provider. Since we're running locally with Ollama, it should automatically select the local backend:
+
+```
+python llm_provider.py
+```
+
+You should see "LLM Provider: Ollama (local)" followed by a response from the model.
+
+<br><br>
+
+5. Now let's build the self-contained agent. This is based on Lab 5's `rag_agent.py` but with two key changes: it uses `llm_provider` instead of ChatOllama directly, and it starts the MCP server as a **subprocess via stdio** instead of connecting over HTTP. Open the diff view:
+
+```
+code -d labs/common/lab6_agent_solution.txt hf_agent.py
+```
+
+<br><br>
+
+6. Review and merge each section. The main things to notice:
+   - The **imports** bring in `Client` from FastMCP and `StdioServerParameters` from the `mcp` library — no direct import of mcp_server.py
+   - **Section 1** has the `MCP_SERVER` config using `StdioServerParameters` — this tells FastMCP to spawn `mcp_stdio_wrapper.py` as a subprocess and communicate via stdin/stdout
+   - **Section 3** has the `unwrap()` function (same as Lab 5) to extract plain values from MCP result wrappers
+   - **Section 4** has the same system prompt from Lab 5
+   - **Section 5** has the async TAO loop — `async with Client(MCP_SERVER) as mcp:` spawns the MCP server subprocess and dispatches weather tools via `await mcp.call_tool(action, args)`
+   - **Section 6** has the sync wrapper `run_agent()` that uses `asyncio.run()` so Gradio can call it easily
+
+   When finished merging, close the tab to save.
+
+<br><br>
+
+7. Now let's run the deployable agent. Note: **no separate MCP server needed** — the agent starts it automatically via stdio!
+
+```
+python hf_agent.py
+```
+
+<br><br>
+
+8. Try the same queries you used in Lab 5:
+
+```
+Tell me about HQ
+Tell me about the Southern office
+```
+
+You should see the same TAO loop output and natural language summaries as before — the behavior is identical, just self-contained.
+
+<br><br>
+
+9.  When done, type "exit" to stop the agent.
+
+<p align="center">
+**[END OF LAB]**
+</p>
+</br></br>
+
+
+**Lab 7 - Adding a Gradio Interface**
+
+**Purpose: In this lab, we'll add a professional web interface using Gradio on top of our deployable agent.**
+
+---
+
+**What the Gradio interface does**
+- Wraps the self-contained agent from Lab 6 in a **professional chat interface** using Gradio's `gr.Blocks` layout system.
+- Provides a sidebar with office data and workflow explanation.
+- Includes example query buttons for quick testing.
+- Uses a pre-built theme (`gr.themes.Soft()`) and custom CSS for a polished look.
+
+**What it demonstrates**
+- **Gradio Blocks**: Flexible layout with rows, columns, and nested components.
+- **Chat component**: `gr.Chatbot` manages conversation history automatically.
+- **Event handlers**: `.click()` and `.submit()` wire UI actions to Python functions.
+- **Graceful fallback**: If the agent isn't available, the UI runs in demo mode.
+
+---
+
+### Steps
+
+1. We have a starter Gradio interface at [**gradio_app.py**](./gradio_app.py). Let's build it out with the diff and merge approach:
+
+```
+code -d labs/common/lab7_gradio_solution.txt gradio_app.py
+```
+
+<br><br>
+
+2. Review and merge each section. Key things to note:
+   - **Section 2** has the `chat_handler()` function — it takes a user message, calls `run_agent()` from `hf_agent.py`, and returns the updated conversation history
+   - **Section 3** has the Gradio layout — a `gr.Chatbot` for the conversation, a `gr.Textbox` for input, Send/Clear buttons, and example query buttons
+   - **Section 4** has the event handlers — `.click()` and `.submit()` connect the UI components to `chat_handler()`
+
+   When finished merging, close the tab to save.
+
+<br><br>
+
+3. Now, let's run the Gradio app:
+
+```
+python gradio_app.py
+```
+
+<br><br>
+
+4. When this starts, you should see a pop-up in the lower right that has a button to click to open the app. Click that to open it in a new browser tab. If it opens a new codespace instance instead, close that tab, go back, and try again.
+
+Alternatively, switch to the *PORTS* tab (next to *TERMINAL*) in the codespace, find the row for port *7860*, hover over the second column, and click on the globe icon.
+
+<br><br>
+
+5. Once the app opens, you'll see the professional interface with a chat area on the left and office information on the right. Try entering a query like:
+
+```
+Tell me about HQ
+```
+
+<br><br>
+
+6. You should see the agent process your query and return a natural language summary with office details and live weather. Try the example buttons at the bottom of the chat area for quick queries.
+
+<br><br>
+
+7. Try a few more queries to see the agent in action. Each conversation is maintained in the chat history.
+
+<br><br>
+
+8. When done, stop the Gradio app with Ctrl-C in the terminal.
+
+<p align="center">
+**[END OF LAB]**
+</p>
+</br></br>
+
+
+**Lab 8 - Deploying to Hugging Face**
+
+**Purpose: Deploying the full app into a Hugging Face Space.**
+
+1. You will need the Hugging Face userid and token value that you created in the README at the beginning of the labs. Make sure you have those handy.
+
+<br><br>
+
+2. Make sure you are logged into huggingface.co. Go to [https://huggingface.co/spaces](https://huggingface.co/spaces) and click on the *New Space* button on the right.
+
+<br><br>
+
+3. On the form for the new Space, provide a name (e.g. "ai-office-assistant"), optionally a description and license. Make sure **Gradio** is selected as the *Space SDK*. You can accept the rest of the defaults on that page. Scroll to the bottom and click *Create Space*.
+
+<br><br>
+
+4. On the next page, we need to setup a secret with our HF token. Click on the *Settings* link on the top right.
+
+<br><br>
+
+5. On the Settings page, scroll down until you find the *Variables and secrets* section. Then click on *New secret*.
+
+<br><br>
+
+6. In the dialog, set the Name to **HF_TOKEN**, add a description if you'd like, and paste your actual Hugging Face token value, then click *Save*.
+
+<br><br>
+
+7. Now, in the root of the project in a terminal, run the following commands to clone the space. Replace *HF_USERID* with your actual Hugging Face userid. (If you named your space something other than "ai-office-assistant", replace that in the commands below.)
+
+```
+git clone https://huggingface.co/spaces/HF_USERID/ai-office-assistant
+cd ai-office-assistant
+```
+
+<br><br>
+
+8. We have a script to get files set up for the Hugging Face deployment. Run the script from this directory as follows:
+
+```
+../scripts/prepare_hf_spaces.sh .
+```
+
+This will copy the necessary Python files (including `mcp_server.py` and `mcp_stdio_wrapper.py` for the stdio MCP connection) and the pre-built vector database, and create a `requirements.txt` and `README.md` configured for Hugging Face Spaces.
+
+<br><br>
+
+9. Now, do the usual Git commands to push your files to the new space:
+
+```
+git add .
+git commit -m "initial commit"
+git push
+```
+
+<br><br>
+
+10. When you run `git push`, VS Code/the codespace will prompt you at the *top* of the screen for your Hugging Face username. Enter your username and hit *Enter*. You will then be prompted for your password — **this is your Hugging Face token value**. Copy and paste the token value into the box.
+
+<br><br>
+
+11. Switch back to your Space on Hugging Face and click on the *App* link at the top. You should see that your app is in the process of building. After a few minutes, the app will be live and you can interact with it just like you did locally — but now it's running on the HuggingFace Inference API instead of Ollama!
+
+<br><br>
+
+12. Congratulations! You've taken an AI agent from a local prototype through to a deployed web application. The same agent code, the same RAG pipeline, the same tools — just with a professional interface and a cloud LLM backend.
+
+<p align="center">
+**[END OF LAB]**
+</p>
+</br></br>
+
 <p align="center">
 **For educational use only by the attendees of our workshops.**
 </p>
