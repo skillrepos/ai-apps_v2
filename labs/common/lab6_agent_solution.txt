@@ -12,8 +12,8 @@ Tools Available to the Agent
 ----------------------------
 1. search_offices(query) → text chunks from office vector DB (local RAG)
 2. geocode_location(name) → lat/lon coordinates (MCP server)
-3. get_weather(lat, lon)  → current weather in Celsius (MCP server)
-4. convert_c_to_f(c)      → temperature in Fahrenheit (MCP server)
+3. get_weather(lat, lon) → current weather in Celsius (MCP server)
+4. convert_c_to_f(c) → temperature in Fahrenheit (MCP server)
 
 Key Changes from Lab 5
 ------------------------------------------
@@ -46,11 +46,11 @@ from llm_provider import get_llm
 # ╔══════════════════════════════════════════════════════════════════╗
 # ║ 1.  Configuration                                               ║
 # ╚══════════════════════════════════════════════════════════════════╝
-CHROMA_PATH     = Path("./chroma_db")
-COLLECTION_NAME = "codebase"
-TOP_K           = 3
+CHROMA_PATH      = Path("./chroma_db")          # Where Lab 4 stored the vector DB
+COLLECTION_NAME  = "codebase"                   # Collection name from Lab 4
+TOP_K            = 3                            # Number of RAG results to retrieve
 
-# Regex patterns for parsing LLM responses (same as Labs 2, 3, and 5)
+# Regex for parsing LLM responses (same pattern as Labs 2 and 3)
 ACTION_RE = re.compile(r"Action:\s*(\w+)", re.IGNORECASE)
 ARGS_RE   = re.compile(r"Args:\s*(\{.*?\})(?:\s|$)", re.S | re.IGNORECASE)
 
@@ -65,6 +65,7 @@ MCP_SERVER = StdioServerParameters(
 # ╔══════════════════════════════════════════════════════════════════╗
 # ║ 2.  RAG search tool (local — queries the ChromaDB from Lab 4)   ║
 # ╚══════════════════════════════════════════════════════════════════╝
+# Initialize the embedding model and database connection once at startup
 embed_fn = DefaultEmbeddingFunction()
 
 def open_collection() -> chromadb.Collection:
@@ -80,7 +81,13 @@ def open_collection() -> chromadb.Collection:
 coll = open_collection()
 
 def search_offices(query: str) -> str:
-    """Search the office vector database for relevant information."""
+    """
+    Search the office vector database for relevant information.
+    This is the 'Retrieval' part of RAG — semantic search over
+    the office PDF data indexed in Lab 4.
+
+    Returns the top matching text chunks as a string.
+    """
     query_vec = embed_fn([query])[0]
     res = coll.query(
         query_embeddings=[query_vec],
@@ -93,7 +100,7 @@ def search_offices(query: str) -> str:
     return "\n---\n".join(docs)
 
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ 3.  MCP result unwrapper (same as Lab 5)                        ║
+# ║ 3.  MCP result unwrapper                                        ║
 # ╚══════════════════════════════════════════════════════════════════╝
 def unwrap(obj):
     """Extract plain Python values from FastMCP result wrappers."""
@@ -206,9 +213,17 @@ async def _run_agent_async(prompt: str, max_steps: int = 10) -> str:
         {"role": "user",   "content": prompt},
     ]
 
-    print("\n" + "=" * 60)
-    print("Office Agent — Thought / Action / Observation")
-    print("=" * 60 + "\n")
+    # Track gathered data for the final display
+    context = {
+        "office_info": None,
+        "city": None,
+        "conditions": None,
+        "temp_f": None,
+    }
+
+    print("\n" + "="*60)
+    print("RAG Agent — Thought / Action / Observation")
+    print("="*60 + "\n")
 
     # Start MCP server as subprocess and connect via stdio
     async with Client(MCP_SERVER) as mcp:
@@ -219,27 +234,36 @@ async def _run_agent_async(prompt: str, max_steps: int = 10) -> str:
             response = llm.invoke(messages).content.strip()
             print(response)
 
-            # Parse the Action
+            # Parse the Action from the response
             action_match = ACTION_RE.search(response)
             if not action_match:
-                print("\nError: Could not parse Action\n")
+                print("\nError: Could not parse Action from response\n")
                 break
 
             action = action_match.group(1).lower()
 
-            # ── Check if the agent is done ─────────────────────────
+            # ── Check if the agent decided it is done ─────────────────
             if action == "done":
-                print("\n" + "=" * 60)
+                print("\n" + "="*60)
+                # Check for LLM-composed summary (v2 enhancement)
                 if "Final:" in response:
                     final = response.split("Final:", 1)[1].strip()
                     print(f"\n{final}\n")
-                    return final
-                return "Agent completed but no summary was generated."
+                else:
+                    # Fallback to collected data
+                    print("Agent completed!\n")
+                    if context["office_info"]:
+                        print(f"Office: {context['office_info']}")
+                    if context["conditions"] and context["temp_f"] is not None:
+                        print(f"Weather: {context['conditions']}, "
+                              f"{context['temp_f']:.1f} °F")
+                    print()
+                return
 
-            # ── Parse the Args ─────────────────────────────────────
+            # ── Parse the Args ────────────────────────────────────────
             args_match = ARGS_RE.search(response)
             if not args_match:
-                print("\nError: Could not parse Args\n")
+                print("\nError: Could not parse Args from response\n")
                 break
 
             try:
@@ -248,30 +272,42 @@ async def _run_agent_async(prompt: str, max_steps: int = 10) -> str:
                 print(f"\nError: Invalid JSON: {e}\n")
                 break
 
-            # ── Call the tool — local (RAG) or MCP (weather) ──────
+            # ── Call the tool — local (RAG) or remote (MCP) ──────────
             print(f"\n-> Calling: {action}({json.dumps(args)})")
 
             try:
                 if action == "search_offices":
                     # Local tool: RAG vector search
                     result = search_offices(**args)
+                    context["office_info"] = result.split("\n")[0][:200]
                 else:
                     # MCP tools: geocode, weather, conversion
                     raw = await mcp.call_tool(action, args)
                     result = unwrap(raw)
+            except ToolError as e:
+                result = f"Error: {e}"
             except Exception as e:
                 result = f"Error: {type(e).__name__}: {e}"
 
-            # Format observation
-            if isinstance(result, (dict, float, int)):
+            # Store relevant context from MCP tool results
+            if action == "geocode_location" and isinstance(result, dict):
+                context["city"] = result.get("name")
+            elif action == "get_weather" and isinstance(result, dict):
+                context["conditions"] = result.get("conditions")
+            elif action == "convert_c_to_f" and isinstance(result, (int, float)):
+                context["temp_f"] = float(result)
+
+            # Format the observation and show it
+            if isinstance(result, dict):
                 obs_text = json.dumps(result)
             else:
                 obs_text = str(result)
             print(f"Observation: {obs_text}\n")
 
-            # Feed observation back to the LLM
+            # Feed the observation back to the LLM
             messages.append({"role": "assistant", "content": response})
-            messages.append({"role": "user", "content": f"Observation: {obs_text}"})
+            messages.append({"role": "user",
+                             "content": f"Observation: {obs_text}"})
 
     return "Reached maximum steps without completing."
 
