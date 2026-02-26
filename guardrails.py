@@ -35,17 +35,17 @@ def _log_security_event(event_type: str, detail: str, matched: list[str]):
 # ╚══════════════════════════════════════════════════════════════════╝
 
 INJECTION_PATTERNS = [
-    re.compile(r"ignore\s+(all\s+)?previous\s+instructions", re.I),
-    re.compile(r"ignore\s+(all\s+)?above\s+instructions", re.I),
-    re.compile(r"disregard\s+(all\s+)?(previous|prior|above)", re.I),
+    re.compile(r"ignore\s+(\w+\s+)*previous\s+instructions", re.I),
+    re.compile(r"ignore\s+(\w+\s+)*above\s+instructions", re.I),
+    re.compile(r"disregard\s+(\w+\s+)*(previous|prior|above)", re.I),
     re.compile(r"you\s+are\s+now\s+(a|an)\s+", re.I),
     re.compile(r"new\s+instructions?\s*:", re.I),
     re.compile(r"system\s*:\s*", re.I),
     re.compile(r"<\s*system\s*>", re.I),
     re.compile(r"pretend\s+(you\s+are|to\s+be)", re.I),
-    re.compile(r"override\s+(your\s+)?(instructions|rules|prompt)", re.I),
-    re.compile(r"forget\s+(your|all)\s+(instructions|rules|training)", re.I),
-    re.compile(r"do\s+not\s+follow\s+(your|the)\s+(rules|instructions)", re.I),
+    re.compile(r"override\s+(\w+\s+)*(instructions|rules|prompt)", re.I),
+    re.compile(r"forget\s+(\w+\s+)*(instructions|rules|training)", re.I),
+    re.compile(r"do\s+not\s+follow\s+(\w+\s+)*(rules|instructions)", re.I),
     re.compile(r"jailbreak", re.I),
 ]
 
