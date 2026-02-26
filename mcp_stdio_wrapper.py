@@ -3,7 +3,7 @@
 Starts the MCP weather server using stdio transport (for subprocess use).
 
 Lab 3's mcp_server.py normally runs as an HTTP server. This tiny wrapper
-imports the same server and runs it over stdio instead, so hf_agent.py
+imports the same server and runs it over stdio instead, so rag_agent.py
 can start it as a subprocess — no network port required.
 
 This is the standard way to embed an MCP server in a deployment:
