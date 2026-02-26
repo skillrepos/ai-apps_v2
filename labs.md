@@ -607,7 +607,7 @@ pip install huggingface_hub gradio
 python llm_provider.py
 ```
 
-You should see "LLM Provider: Ollama (local)" followed by a response from the model.
+You should see "LLM Provider: Ollama (local)" — this confirms that `get_llm()` detected no `HF_TOKEN` in the environment and automatically chose the local Ollama backend. It then sends a quick test message and prints the model's response. When we deploy to HF Spaces later, the same code will print "HuggingFace Inference API" instead because `HF_TOKEN` will be set as a secret there.
 
 <br><br>
 
