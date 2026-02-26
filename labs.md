@@ -600,14 +600,16 @@ pip install huggingface_hub gradio
 code -d labs/common/lab6_llm_provider_solution.txt llm_provider.py
 ```
 
-<br><br>
-
-3. Review each section as you merge. Key things to note:
+ Review each section as you merge. Key things to note:
    - **HFResponse** class wraps HF API responses to look like LangChain responses
    - **HFLLMWrapper** class creates a HuggingFace `InferenceClient` and provides the same `.invoke(messages)` interface as ChatOllama
    - **get_llm()** checks for `HF_TOKEN` in the environment — if found, returns the HF wrapper; otherwise returns ChatOllama
 
-   When finished merging, close the tab to save.
+![Code for llm provider solution](./images/v2app15.png?raw=true "Code for llm provider solution") 
+
+<br><br>
+
+3. When finished merging, close the tab to save.
 
 <br><br>
 
@@ -619,12 +621,14 @@ python llm_provider.py
 
 You should see "LLM Provider: Ollama (local)" followed by a response from the model.
 
+![llm provider response](./images/v2app16.png?raw=true "LLM provider response") 
+
 <br><br>
 
-5. Now let's build the self-contained agent. This is based on Lab 5's `rag_agent.py` but with two key changes: it uses `llm_provider` instead of ChatOllama directly, and it starts the MCP server as a **subprocess via stdio** instead of connecting over HTTP. Open the diff view:
+5. Now let's evolve our agent. We'll make two key changes to `rag_agent.py`: swap in `llm_provider` instead of ChatOllama directly, and start the MCP server as a **subprocess via stdio** instead of connecting over HTTP. Open the diff view:
 
 ```
-code -d labs/common/lab6_agent_solution.txt hf_agent.py
+code -d labs/common/lab6_agent_solution.txt rag_agent.py
 ```
 
 <br><br>
@@ -644,7 +648,7 @@ code -d labs/common/lab6_agent_solution.txt hf_agent.py
 7. Now let's run the deployable agent. Note: **no separate MCP server needed** — the agent starts it automatically via stdio!
 
 ```
-python hf_agent.py
+python rag_agent.py
 ```
 
 <br><br>
@@ -699,7 +703,7 @@ code -d labs/common/lab7_gradio_solution.txt gradio_app.py
 <br><br>
 
 2. Review and merge each section. Key things to note:
-   - **Section 2** has the `chat_handler()` function — it takes a user message, calls `run_agent()` from `hf_agent.py`, and returns the updated conversation history
+   - **Section 2** has the `chat_handler()` function — it takes a user message, calls `run_agent()` from `rag_agent.py`, and returns the updated conversation history
    - **Section 3** has the Gradio layout — a `gr.Chatbot` for the conversation, a `gr.Textbox` for input, Send/Clear buttons, and example query buttons
    - **Section 4** has the event handlers — `.click()` and `.submit()` connect the UI components to `chat_handler()`
 
