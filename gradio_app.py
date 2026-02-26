@@ -74,8 +74,6 @@ CUSTOM_CSS = """
 
 with gr.Blocks(
     title="AI Office Assistant",
-    css=CUSTOM_CSS,
-    theme=gr.themes.Soft(),
 ) as demo:
 
     # ── Header ─────────────────────────────────────────────────────
@@ -156,4 +154,6 @@ if __name__ == "__main__":
         server_name="0.0.0.0",
         server_port=7860,
         share=True,
+        css=CUSTOM_CSS,
+        theme=gr.themes.Soft(),
     )
