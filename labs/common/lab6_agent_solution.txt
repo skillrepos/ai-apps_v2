@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Lab 6: Self-Contained Office Agent (Deployable)
+Lab 6: RAG-Enhanced Office Agent (Deployable)
 ═══════════════════════════════════════════════════════════════════════
-A deployable version of the RAG agent from Lab 5 that:
+Evolves the RAG agent from Lab 5 to be deployment-ready:
 - Uses llm_provider for flexible LLM backend (Ollama OR HF Inference)
 - Starts the MCP server as a SUBPROCESS via stdio transport
 - Still uses ChromaDB for office RAG search (from Lab 4)
@@ -15,7 +15,7 @@ Tools Available to the Agent
 3. get_weather(lat, lon)  → current weather in Celsius (MCP server)
 4. convert_c_to_f(c)      → temperature in Fahrenheit (MCP server)
 
-Key Differences from Lab 5's rag_agent.py
+Key Changes from Lab 5
 ------------------------------------------
 - Lab 5 connected to the MCP server over HTTP → requires running it
   separately with "python mcp_server.py"
