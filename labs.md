@@ -817,21 +817,31 @@ Tell me about HQ
 
 2. Make sure you are logged into huggingface.co. Go to [https://huggingface.co/spaces](https://huggingface.co/spaces) and click on the *New Space* button on the right.
 
+![New space](./images/aia-3-48.png?raw=true "New space")
+
 <br><br>
 
 3. On the form for the new Space, provide a name (e.g. "ai-office-assistant"), optionally a description and license. Make sure **Gradio** is selected as the *Space SDK*. You can accept the rest of the defaults on that page. Scroll to the bottom and click *Create Space*.
+
+![New space](./images/ae85.png?raw=true "New space")
 
 <br><br>
 
 4. On the next page, we need to setup a secret with our HF token. Click on the *Settings* link on the top right.
 
+![Settings](./images/aia-3-51.png?raw=true "Settings")
+
 <br><br>
 
 5. On the Settings page, scroll down until you find the *Variables and secrets* section. Then click on *New secret*.
 
+![Settings](./images/aia-3-52.png?raw=true "Settings")
+
 <br><br>
 
 6. In the dialog, set the Name to **HF_TOKEN**, add a description if you'd like, and paste your actual Hugging Face token value, then click *Save*.
+
+![Secret values](./images/ae86.png?raw=true "Secret values")
 
 <br><br>
 
@@ -842,6 +852,8 @@ git clone https://huggingface.co/spaces/HF_USERID/ai-office-assistant
 cd ai-office-assistant
 ```
 
+![Cloning](./images/ae166.png?raw=true "Cloning")
+
 <br><br>
 
 8. We have a script to get files set up for the Hugging Face deployment. Run the script from this directory as follows:
@@ -851,6 +863,8 @@ cd ai-office-assistant
 ```
 
 This will copy the necessary Python files (including `mcp_server.py` and `mcp_stdio_wrapper.py` for the stdio MCP connection) and the pre-built vector database, and create a `requirements.txt` and `README.md` configured for Hugging Face Spaces.
+
+![Space prep](./images/ae167.png?raw=true "Space prep")
 
 <br><br>
 
@@ -866,9 +880,15 @@ git push
 
 10. When you run `git push`, VS Code/the codespace will prompt you at the *top* of the screen for your Hugging Face username. Enter your username and hit *Enter*. You will then be prompted for your password — **this is your Hugging Face token value**. Copy and paste the token value into the box.
 
+![Enter HF username](./images/aia-3-53.png?raw=true "Enter HF username")
+
+![Enter HF token](./images/aia-3-54.png?raw=true "Enter HF token")
+
 <br><br>
 
 11. Switch back to your Space on Hugging Face and click on the *App* link at the top. You should see that your app is in the process of building. After a few minutes, the app will be live and you can interact with it just like you did locally — but now it's running on the HuggingFace Inference API instead of Ollama!
+
+
 
 <br><br>
 
