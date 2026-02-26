@@ -1,7 +1,7 @@
-# AI 3-in-1: Agents, RAG and Local Models
-## Building out an AI agent that uses RAG and runs locally
+# AI for App Development - Deep Dive
+## Building and deploying AI Apps that leverage agents, MCP and RAG
 ## Session labs 
-## Revision 4.5 - 02/23/26
+## Revision 1.0 - 02/26/26
 
 **Follow the startup instructions in the README.md file IF NOT ALREADY DONE!**
 
@@ -68,7 +68,7 @@ ollama list
 ollama pull llama3.2
 ```
 
-![pulling the model](./images/31ai9.png?raw=true "pulling the model")
+![pulling the model](./images/v2app1.png?raw=true "pulling the model")
 
 <br><br>
 
@@ -137,7 +137,7 @@ python simple_ollama.py
 
 11. When prompted, enter a question like "What is the capital of France?" and press Enter. You should see the model's response printed to the terminal. This demonstrates how easy it is to integrate Ollama into a Python application. Feel free to try other prompts. 
 
-![query](./images/31ai35.png?raw=true "query")
+![query](./images/v2app3.png?raw=true "query")
 
 
 <br><br>
@@ -215,7 +215,7 @@ code -d labs/common/lab2_agent_solution.txt agent.py
 python agent.py
 ```
 
-![Running the agent](./images/31ai41.png?raw=true "Running the agent")
+![Running the agent](./images/v2app2.png?raw=true "Running the agent")
 
 <br><br>
 
