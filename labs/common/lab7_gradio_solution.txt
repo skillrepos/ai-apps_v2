@@ -114,8 +114,6 @@ def chat_handler(message: str, history: list) -> tuple:
 
 with gr.Blocks(
     title="AI Office Assistant",
-    css=CUSTOM_CSS,
-    theme=gr.themes.Soft(),
 ) as demo:
 
     # ── Header ─────────────────────────────────────────────────────
@@ -142,7 +140,6 @@ with gr.Blocks(
                 type="messages",
                 height=450,
                 placeholder="Ask about any company office...",
-                show_copy_button=True,
             )
 
             msg = gr.Textbox(
@@ -232,4 +229,6 @@ if __name__ == "__main__":
         server_name="0.0.0.0",
         server_port=7860,
         share=True,
+        css=CUSTOM_CSS,
+        theme=gr.themes.Soft(),
     )
