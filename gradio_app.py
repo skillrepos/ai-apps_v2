@@ -13,7 +13,7 @@ KEY CONCEPTS
 
 ARCHITECTURE
 ------------
-  User types query → chat_handler() → hf_agent.run_agent() → response
+  User types query → chat_handler() → rag_agent.run_agent() → response
   Response displayed in Chatbot component with full conversation history
 """
 
@@ -27,11 +27,11 @@ import gradio as gr
 # Agent Import — if the agent isn't available, the UI runs in demo mode
 # ─────────────────────────────────────────────────────────────────────
 try:
-    from hf_agent import run_agent
+    from rag_agent import run_agent
     AGENT_AVAILABLE = True
 except ImportError:
     AGENT_AVAILABLE = False
-    print("Warning: hf_agent not available. Running in demo mode.")
+    print("Warning: rag_agent not available. Running in demo mode.")
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
