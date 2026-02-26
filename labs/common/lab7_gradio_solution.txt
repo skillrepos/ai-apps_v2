@@ -137,9 +137,7 @@ with gr.Blocks(
         # ── Chat column ────────────────────────────────────────────
         with gr.Column(scale=3):
             chatbot = gr.Chatbot(
-                type="messages",
                 height=450,
-                placeholder="Ask about any company office...",
             )
 
             msg = gr.Textbox(
@@ -232,3 +230,4 @@ if __name__ == "__main__":
         css=CUSTOM_CSS,
         theme=gr.themes.Soft(),
     )
+
