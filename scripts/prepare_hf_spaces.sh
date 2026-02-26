@@ -13,7 +13,7 @@
 #
 # Files included:
 #   - gradio_app.py       (Gradio UI — HF Spaces entry point)
-#   - hf_agent.py         (Self-contained agent)
+#   - rag_agent.py         (Self-contained agent)
 #   - llm_provider.py     (LLM backend provider)
 #   - mcp_server.py       (MCP weather/geocoding tools)
 #   - mcp_stdio_wrapper.py (Starts MCP server in stdio transport mode)
@@ -56,7 +56,7 @@ mkdir -p "$OUTPUT_DIR"
 echo -e "${GREEN}Copying Python source files...${NC}"
 
 cp "$PROJECT_ROOT/gradio_app.py" "$OUTPUT_DIR/"
-cp "$PROJECT_ROOT/hf_agent.py" "$OUTPUT_DIR/"
+cp "$PROJECT_ROOT/rag_agent.py" "$OUTPUT_DIR/"
 cp "$PROJECT_ROOT/llm_provider.py" "$OUTPUT_DIR/"
 cp "$PROJECT_ROOT/mcp_server.py" "$OUTPUT_DIR/"
 cp "$PROJECT_ROOT/mcp_stdio_wrapper.py" "$OUTPUT_DIR/"
