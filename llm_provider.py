@@ -22,15 +22,54 @@ HF_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 # ╔══════════════════════════════════════════════════════════════════╗
 # ║ 2.  Response wrapper                                             ║
 # ╚══════════════════════════════════════════════════════════════════╝
-# TODO: HFResponse class that wraps HF responses to look like LangChain
+class HFResponse:
+    """Simple wrapper so HF responses look like LangChain responses."""
+    def __init__(self, content: str):
+        self.content = content
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
 # ║ 3.  HuggingFace Inference API wrapper                           ║
 # ╚══════════════════════════════════════════════════════════════════╝
-# TODO: HFLLMWrapper class with __init__ and invoke methods
-#       - __init__ creates an InferenceClient from huggingface_hub
-#       - invoke(messages) sends messages to HF API and returns HFResponse
+class HFLLMWrapper:
+    """
+    Wraps the HuggingFace Inference API so it has the same
+    .invoke(messages) interface as LangChain's ChatOllama.
+    """
+
+    def __init__(self, token: str, model: str = HF_MODEL):
+        from huggingface_hub import InferenceClient
+        self.client = InferenceClient(model=model, token=token)
+        self.model = model
+        print(f"  Using HuggingFace model: {model}")
+
+    def invoke(self, messages) -> HFResponse:
+        """
+        Send a list of messages to the HF Inference API.
+        Accepts the same dict format as ChatOllama:
+          [{"role": "system", "content": "..."}, {"role": "user", ...}]
+        """
+        # Build message list for HF API
+        hf_messages = []
+        for msg in messages:
+            if isinstance(msg, dict):
+                hf_messages.append({
+                    "role": msg["role"],
+                    "content": msg["content"],
+                })
+            elif hasattr(msg, "role") and hasattr(msg, "content"):
+                hf_messages.append({
+                    "role": msg.role,
+                    "content": msg.content,
+                })
+
+        # Call the HF Inference API
+        response = self.client.chat_completion(
+            messages=hf_messages,
+            max_tokens=1024,
+            temperature=0.1,
+        )
+        return HFResponse(response.choices[0].message.content)
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
@@ -43,7 +82,15 @@ def get_llm():
     - If HF_TOKEN is set → HuggingFace Inference API (for HF Spaces)
     - Otherwise          → Ollama local model         (for Codespaces)
     """
-    # TODO: Check for HF_TOKEN and return the appropriate LLM backend
+    hf_token = os.environ.get("HF_TOKEN")
+
+    if hf_token:
+        print("LLM Provider: HuggingFace Inference API")
+        return HFLLMWrapper(token=hf_token)
+    else:
+        print("LLM Provider: Ollama (local)")
+        from langchain_ollama import ChatOllama
+        return ChatOllama(model="llama3.2:latest", temperature=0.0)
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
@@ -57,3 +104,4 @@ if __name__ == "__main__":
     print("\nSending test message...")
     response = llm.invoke([{"role": "user", "content": "Say hello in one sentence."}])
     print(f"Response: {response.content}")
+
