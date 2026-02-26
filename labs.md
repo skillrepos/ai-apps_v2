@@ -392,7 +392,7 @@ code tools/index_pdf.py
 python tools/index_code.py
 ```
 
-![Running code indexer](./images/31ai53.png?raw=true "Running code indexer")
+![Running code indexer](./images/v2app8.png?raw=true "Running code indexer")
 
 <br><br>
 
@@ -415,7 +415,7 @@ embed model sentence-transformers
 async with Client mcp
 ```
 
-![Running search](./images/31ai54.png?raw=true "Running search")
+![Running search](./images/v2app9.png?raw=true "Running search")
 
 <br><br>
 
@@ -425,7 +425,7 @@ async with Client mcp
 python tools/index_pdf.py
 ```
 
-![Indexing PDF](./images/31ai55.png?raw=true "Indexing PDF")
+![Indexing PDF](./images/v2app10.png?raw=true "Indexing PDF")
 
 <br><br>
 
@@ -441,7 +441,7 @@ Tech Development sites
 High revenue branch
 ```
 
-![PDF search](./images/31ai56.png?raw=true "PDF search")
+![PDF search](./images/v2app11.png?raw=true "PDF search")
 
 <br><br>
 
