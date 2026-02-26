@@ -1,7 +1,7 @@
 # AI for App Development - Deep Dive
 ## Building and deploying AI Apps that leverage agents, MCP and RAG
 ## Session labs 
-## Revision 2.0 - 02/26/26
+## Revision 2.1 - 02/26/26
 
 **Follow the startup instructions in the README.md file IF NOT ALREADY DONE!**
 
@@ -751,6 +751,8 @@ In production, this log would feed into a monitoring system (e.g. Datadog, Splun
 code -d labs/common/lab7_gradio_solution.txt gradio_app.py
 ```
 
+![Building out Gradio interface](./images/v2app26.png?raw=true "Building out Gradio interface")
+
 <br><br>
 
 2. Review and merge each section. Key things to note:
@@ -782,13 +784,19 @@ Alternatively, switch to the *PORTS* tab (next to *TERMINAL*) in the codespace, 
 Tell me about HQ
 ```
 
+![Gradio interface](./images/v2app30.png?raw=true "Gradio interface")
+
 <br><br>
 
 6. You should see the agent process your query and return a natural language summary with office details and live weather. Try the example buttons at the bottom of the chat area for quick queries.
 
+![Gradio interface](./images/v2app29.png?raw=true "Gradio interface")
+
 <br><br>
 
-7. Try a few more queries to see the agent in action. Each conversation is maintained in the chat history.
+7. Try a few more queries to see the agent in action. You'll see your previous questions and answers stay visible in the chat window — though note that each query is independent (the agent doesn't carry context between questions).
+
+![Gradio interface](./images/v2app31.png?raw=true "Gradio interface")
 
 <br><br>
 
@@ -798,7 +806,6 @@ Tell me about HQ
 **[END OF LAB]**
 </p>
 </br></br>
-
 
 **Lab 8 - Deploying to Hugging Face**
 
