@@ -15,7 +15,8 @@
 #   - gradio_app.py       (Gradio UI — HF Spaces entry point)
 #   - rag_agent.py         (Self-contained agent)
 #   - llm_provider.py     (LLM backend provider)
-#   - mcp_server.py       (MCP weather/geocoding tools)
+#   - guardrails.py       (Prompt-injection detection)
+#   - mcp_server.py       (MCP weather/geocoding/RAG tools)
 #   - mcp_stdio_wrapper.py (Starts MCP server in stdio transport mode)
 #   - chroma_db/          (Pre-built vector database from Lab 4)
 #   - requirements.txt    (Python dependencies for HF Spaces)
@@ -58,6 +59,7 @@ echo -e "${GREEN}Copying Python source files...${NC}"
 cp "$PROJECT_ROOT/gradio_app.py" "$OUTPUT_DIR/"
 cp "$PROJECT_ROOT/rag_agent.py" "$OUTPUT_DIR/"
 cp "$PROJECT_ROOT/llm_provider.py" "$OUTPUT_DIR/"
+cp "$PROJECT_ROOT/guardrails.py" "$OUTPUT_DIR/"
 cp "$PROJECT_ROOT/mcp_server.py" "$OUTPUT_DIR/"
 cp "$PROJECT_ROOT/mcp_stdio_wrapper.py" "$OUTPUT_DIR/"
 
