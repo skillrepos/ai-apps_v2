@@ -134,8 +134,8 @@ async def run(prompt: str, max_steps: int = 10) -> None:
                 result = f"Error: {type(e).__name__}: {e}"
 
             # Store relevant context from tool results
-            if action == "search_offices" and isinstance(result, str):
-                context["office_info"] = result.split("\n")[0][:200]
+            if action == "search_offices":
+                context["office_info"] = str(result).split("\n")[0][:200]
             elif action == "geocode_location" and isinstance(result, dict):
                 context["city"] = result.get("name")
             elif action == "get_weather" and isinstance(result, dict):
