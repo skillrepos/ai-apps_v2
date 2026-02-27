@@ -654,12 +654,13 @@ code -d labs/common/lab6_agent_solution.txt rag_agent.py
    - **Section 1** replaces the HTTP endpoint with `MCP_SERVER` — a path to `mcp_stdio_wrapper.py`. FastMCP’s Client sees a `.py` path and auto-starts it as a subprocess, talking MCP over stdin/stdout
    - **Section 4** has the async TAO loop with three guardrail checkpoints: input check before the LLM sees the prompt, tool-result check after each MCP call, and output check on the final answer
    - **Section 5** has the sync wrapper `run_agent()` that uses `asyncio.run()` so Gradio can call it easily
+   - **System prompt changes** There are also some changes to the system prompt to better accomodate the larger model we will be using on Hugging Face
 
    When finished merging, close the tab to save.
 
 <br><br>
 
-5. Now let’s run the deployable agent. Note: **no separate MCP server needed** — the agent starts it automatically via stdio!
+5. Now let’s run the deployable agent. Note: no separate MCP server run needed — the agent starts it automatically via stdio. This make take a moment to start up and run.
 
 ```
 python rag_agent.py
@@ -700,7 +701,7 @@ You should see “⚠️  Prompt blocked by guardrails.” and a safe refusal in
 cat security.log
 ```
 
-![Viewing security log](./images/v2app24.png?raw=true "Viewing security log")
+![Viewing security log](./images/v2app49.png?raw=true "Viewing security log")
 
 You should see a timestamped entry like:
 
