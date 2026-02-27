@@ -289,7 +289,7 @@ python mcp_server.py
 <br><br>
 
 4. We also have a small helper script that connects to the MCP server and **lists the available tools** (for demo purposes).
-  Take a look at the code in `tools/discover_tools.py`, then run it to print the server’s tool list: (Make sure to click back in the terminal before typing the second command.)
+  Take a look at the code in `tools/discover_tools.py`, then run it to print the server’s tool list: (**Make sure to click back in the terminal before typing the second command.**)
 
 ```
 code tools/discover_tools.py
