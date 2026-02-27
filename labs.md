@@ -314,7 +314,7 @@ code -d labs/common/lab3_agent_solution_dynamic.txt mcp_agent.py
 
 <br><br>
    
-7. After you've made and saved the changes, you can run the client in the terminal with the command below. **Note that there may be a long pause initially while the model is loaded and processed before you get the final answer. This could be on the order of minutes.**
+7. After you've made and saved the changes, you can run the client in the terminal with the command below. 
 
 ```
 python mcp_agent.py
@@ -322,7 +322,7 @@ python mcp_agent.py
 
 <br><br>
 
-8. The agent should start up, and wait for you to prompt it about weather in a location. You'll be able to see similar TAO output. And you'll also be able to see the server INFO messages in the other terminal as the MCP connections and events happen. A suggested prompt is below.
+8. The agent should start up, and wait for you to prompt it about weather in a location. You'll be able to see similar TAO output. And you'll also be able to see the server INFO messages in the other terminal as the MCP connections and events happen. A suggested prompt is below. (**Note that there may be a long period of processing before you get the final answer. This could be on the order of minutes.**)
 
 ```
 What is the weather in New York?
