@@ -130,7 +130,7 @@ with gr.Blocks(
     gr.HTML("""
     <div style="text-align: center; padding: 1rem; margin-top: 1rem;
                 border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 0.8rem;">
-        AI for App Development
+        AI Office Assistant
         · <a href="https://getskillsnow.com" target="_blank"
               style="color: #64748b; text-decoration: none;">
             &copy; 2026 Tech Skills Transformations
