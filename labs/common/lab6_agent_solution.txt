@@ -201,14 +201,26 @@ async def _run_agent_async(prompt: str, max_steps: int = 10) -> str:
 
             # ── Check if the agent decided it is done ─────────────────
             if action == "done":
+                # Some models include "Final:" in the DONE response;
+                # others omit it.  If missing, ask the LLM once more.
+                if "Final:" not in response:
+                    messages.append({"role": "assistant", "content": response})
+                    messages.append({"role": "user", "content":
+                        "Now provide your Final: summary."})
+                    response = llm.invoke(messages).content.strip()
+                    print(response)
+
                 print("\n" + "="*60)
                 if "Final:" in response:
                     final = response.split("Final:", 1)[1].strip()
-                    # ── Guardrail: sanitise output before user sees it ─
-                    final = check_output(final)
-                    print(f"\n{final}\n")
-                    return final
-                return "Agent completed but no summary was generated."
+                else:
+                    # Model gave the summary as plain text
+                    final = response.strip()
+
+                # ── Guardrail: sanitise output before user sees it ─
+                final = check_output(final)
+                print(f"\n{final}\n")
+                return final
 
             # ── Parse the Args ────────────────────────────────────────
             args_match = ARGS_RE.search(response)
