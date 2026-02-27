@@ -823,7 +823,7 @@ Tell me about HQ
 
 3. On the form for the new Space, provide a name (e.g. "ai-office-assistant"), optionally a description and license. Make sure **Gradio** is selected as the *Space SDK*. You can accept the rest of the defaults on that page. Scroll to the bottom and click *Create Space*.
 
-![New space](./images/ae85.png?raw=true "New space")
+![New space](./images/v2app32.png?raw=true "New space")
 
 <br><br>
 
@@ -841,7 +841,7 @@ Tell me about HQ
 
 6. In the dialog, set the Name to **HF_TOKEN**, add a description if you'd like, and paste your actual Hugging Face token value, then click *Save*.
 
-![Secret values](./images/ae86.png?raw=true "Secret values")
+![Secret values](./images/v2app33.png?raw=true "Secret values")
 
 <br><br>
 
@@ -864,7 +864,7 @@ cd ai-office-assistant
 
 This will copy the necessary Python files (including `mcp_server.py` and `mcp_stdio_wrapper.py` for the stdio MCP connection) and the pre-built vector database, and create a `requirements.txt` and `README.md` configured for Hugging Face Spaces.
 
-![Space prep](./images/ae167.png?raw=true "Space prep")
+![Space prep](./images/v2app35.png?raw=true "Space prep")
 
 <br><br>
 
