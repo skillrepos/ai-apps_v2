@@ -894,7 +894,7 @@ git push
 
 <br><br>
 
-12. Congratulations! You've taken an AI agent from a local prototype through to a deployed web application. The same agent code, the same RAG pipeline, the same tools — just with a professional interface and a cloud LLM backend.
+12. Congratulations! You've taken an AI agent from a local prototype through to a deployed web application. with a professional interface and a cloud LLM backend.
 
 <p align="center">
 **[END OF LAB]**
