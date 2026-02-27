@@ -4,18 +4,18 @@ Lab 5: RAG-Enhanced Agentic Weather Agent
 ────────────────────────────────────────────────────────────────────
 A true agentic RAG workflow combining:
 - Lab 2's agent pattern (TAO loop with LLM-driven tool selection)
-- Lab 3's MCP server (weather and geocoding tools)
+- Lab 3's MCP server (weather, geocoding, and now RAG search tools)
 - Lab 4's vector database (ChromaDB with office PDF data)
 
 The LLM controls the entire workflow, deciding which tools to call
 and when to stop — just like the agents in Labs 2 and 3.
 
-Tools Available to the Agent
-----------------------------
-1. search_offices(query) → text chunks from office vector DB (local RAG)
-2. geocode_location(name) → lat/lon coordinates (MCP server)
-3. get_weather(lat, lon) → current weather in Celsius (MCP server)
-4. convert_c_to_f(c) → temperature in Fahrenheit (MCP server)
+Tools Available to the Agent (ALL via MCP server)
+--------------------------------------------------
+1. search_offices(query) → text chunks from office vector DB
+2. geocode_location(name) → lat/lon coordinates
+3. get_weather(lat, lon)  → current weather in Celsius
+4. convert_c_to_f(c)      → temperature in Fahrenheit
 
 Example Agent Flow
 ------------------
@@ -28,8 +28,7 @@ Example Agent Flow
 
 Prerequisites
 -------------
-- ChromaDB populated: python tools/index_pdf.py (Lab 4)
-- MCP server running: python mcp_server.py (Lab 3)
+- MCP server running: python mcp_server.py (Lab 5 version with search_offices)
 """
 
 # ────────────────────────── standard libs ───────────────────────────
@@ -40,9 +39,6 @@ import textwrap
 from pathlib import Path
 
 # ────────────────────────── third-party libs ────────────────────────
-import chromadb
-from chromadb.config import Settings, DEFAULT_TENANT, DEFAULT_DATABASE
-from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
 from langchain_ollama import ChatOllama
@@ -50,54 +46,14 @@ from langchain_ollama import ChatOllama
 # ╔══════════════════════════════════════════════════════════════════╗
 # ║ 1.  Configuration                                               ║
 # ╚══════════════════════════════════════════════════════════════════╝
-CHROMA_PATH      = Path("./chroma_db")          # Where Lab 4 stored the vector DB
-COLLECTION_NAME  = "codebase"                   # Collection name from Lab 4
-MCP_ENDPOINT     = "http://127.0.0.1:8000/mcp/" # MCP server from Lab 3
-TOP_K            = 3                            # Number of RAG results to retrieve
+MCP_ENDPOINT     = "http://127.0.0.1:8000/mcp/" # MCP server from Lab 5
 
 # Regex for parsing LLM responses (same pattern as Labs 2 and 3)
 ACTION_RE = re.compile(r"Action:\s*(\w+)", re.IGNORECASE)
 ARGS_RE   = re.compile(r"Args:\s*(\{.*?\})(?:\s|$)", re.S | re.IGNORECASE)
 
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ 2.  RAG search tool (local — queries the ChromaDB from Lab 4)   ║
-# ╚══════════════════════════════════════════════════════════════════╝
-# Initialize the embedding model and database connection once at startup
-embed_fn = DefaultEmbeddingFunction()
-
-def open_collection() -> chromadb.Collection:
-    """Open the ChromaDB collection populated in Lab 4."""
-    client = chromadb.PersistentClient(
-        path=str(CHROMA_PATH),
-        settings=Settings(),
-        tenant=DEFAULT_TENANT,
-        database=DEFAULT_DATABASE,
-    )
-    return client.get_or_create_collection(COLLECTION_NAME)
-
-coll = open_collection()
-
-def search_offices(query: str) -> str:
-    """
-    Search the office vector database for relevant information.
-    This is the 'Retrieval' part of RAG — semantic search over
-    the office PDF data indexed in Lab 4.
-
-    Returns the top matching text chunks as a string.
-    """
-    query_vec = embed_fn([query])[0]
-    res = coll.query(
-        query_embeddings=[query_vec],
-        n_results=TOP_K,
-        include=["documents"],
-    )
-    docs = res["documents"][0] if res["documents"] else []
-    if not docs:
-        return "No matching office information found."
-    return "\n---\n".join(docs)
-
-# ╔══════════════════════════════════════════════════════════════════╗
-# ║ 3.  MCP result unwrapper                                        ║
+# ║ 2.  MCP result unwrapper                                        ║
 # ╚══════════════════════════════════════════════════════════════════╝
 def unwrap(obj):
     """Extract plain Python values from FastMCP result wrappers."""
@@ -121,7 +77,7 @@ def unwrap(obj):
     return obj
 
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ 4.  System prompt — tells the LLM about all available tools     ║
+# ║ 3.  System prompt — tells the LLM about all available tools     ║
 # ╚══════════════════════════════════════════════════════════════════╝
 SYSTEM = textwrap.dedent("""
 You are an office information agent. You answer questions about company
@@ -189,14 +145,14 @@ RULES:
 """).strip()
 
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ 5.  TAO agent loop — the LLM decides which tools to call        ║
+# ║ 4.  TAO agent loop — the LLM decides which tools to call        ║
 # ╚══════════════════════════════════════════════════════════════════╝
 async def run(prompt: str, max_steps: int = 10) -> None:
     """
     Run the agentic RAG loop where the LLM drives the workflow.
 
-    The agent can call local tools (search_offices for RAG retrieval)
-    and remote tools (geocode, weather, conversion via MCP server).
+    ALL tools go through the MCP server — the agent is a pure
+    orchestrator that never touches the database or APIs directly.
     """
     llm = ChatOllama(model="llama3.2:latest", temperature=0.0)
 
@@ -257,25 +213,21 @@ async def run(prompt: str, max_steps: int = 10) -> None:
                 print(f"\nError: Invalid JSON: {e}\n")
                 break
 
-            # ── Call the tool — local (RAG) or remote (MCP) ──────────
+            # ── Call the tool via MCP ─────────────────────────────────
             print(f"\n-> Calling: {action}({json.dumps(args)})")
 
             try:
-                if action == "search_offices":
-                    # Local tool: RAG vector search
-                    result = search_offices(**args)
-                    context["office_info"] = result.split("\n")[0][:200]
-                else:
-                    # MCP tools: geocode, weather, conversion
-                    raw = await mcp.call_tool(action, args)
-                    result = unwrap(raw)
+                raw = await mcp.call_tool(action, args)
+                result = unwrap(raw)
             except ToolError as e:
                 result = f"Error: {e}"
             except Exception as e:
                 result = f"Error: {type(e).__name__}: {e}"
 
-            # Store relevant context from MCP tool results
-            if action == "geocode_location" and isinstance(result, dict):
+            # Store relevant context from tool results
+            if action == "search_offices" and isinstance(result, str):
+                context["office_info"] = result.split("\n")[0][:200]
+            elif action == "geocode_location" and isinstance(result, dict):
                 context["city"] = result.get("name")
             elif action == "get_weather" and isinstance(result, dict):
                 context["conditions"] = result.get("conditions")
@@ -283,7 +235,7 @@ async def run(prompt: str, max_steps: int = 10) -> None:
                 context["temp_f"] = float(result)
 
             # Format the observation and show it
-            if isinstance(result, dict):
+            if isinstance(result, (dict, float, int)):
                 obs_text = json.dumps(result)
             else:
                 obs_text = str(result)
@@ -297,7 +249,7 @@ async def run(prompt: str, max_steps: int = 10) -> None:
         print(f"\nReached maximum steps ({max_steps}).\n")
 
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ 6.  Interactive loop                                             ║
+# ║ 5.  Interactive loop                                             ║
 # ╚══════════════════════════════════════════════════════════════════╝
 if __name__ == "__main__":
     print("="*60)
