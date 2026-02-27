@@ -5,15 +5,16 @@ Lab 6: RAG-Enhanced Office Agent (Deployable)
 Evolves the RAG agent from Lab 5 to be deployment-ready:
 - Uses llm_provider for flexible LLM backend (Ollama OR HF Inference)
 - Starts the MCP server as a SUBPROCESS via stdio transport
-- Still uses ChromaDB for office RAG search (from Lab 4)
+- ALL tools (including search_offices) now go through MCP
+- Adds guardrails for prompt-injection defence at three boundaries
 - Ready for Gradio interface (Lab 7) and HF deployment (Lab 8)
 
-Tools Available to the Agent
-----------------------------
-1. search_offices(query) → text chunks from office vector DB (local RAG)
-2. geocode_location(name) → lat/lon coordinates (MCP server)
-3. get_weather(lat, lon) → current weather in Celsius (MCP server)
-4. convert_c_to_f(c) → temperature in Fahrenheit (MCP server)
+Tools Available (all via MCP server)
+------------------------------------
+1. search_offices(query) → text chunks from office vector DB
+2. geocode_location(name) → lat/lon coordinates
+3. get_weather(lat, lon)  → current weather in Celsius
+4. convert_c_to_f(c)      → temperature in Fahrenheit
 
 Key Changes from Lab 5
 ------------------------------------------
@@ -21,6 +22,8 @@ Key Changes from Lab 5
   separately with "python mcp_server.py"
 - This version starts the MCP server as a SUBPROCESS and connects
   via stdio transport → fully self-contained, one command to run
+- Lab 5 had search_offices as a local function in the agent →
+  now it's an MCP tool too, so the agent is a pure orchestrator
 - Lab 5 used ChatOllama directly → this uses llm_provider (Ollama or HF)
 - Adds a synchronous wrapper so Gradio can call it easily
 """
@@ -29,78 +32,31 @@ Key Changes from Lab 5
 import asyncio
 import json
 import re
-import sys
 import textwrap
 from pathlib import Path
 
 # ────────────────────────── third-party libs ────────────────────────
-import chromadb
-from chromadb.config import Settings, DEFAULT_TENANT, DEFAULT_DATABASE
-from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 from fastmcp import Client
-from mcp import StdioServerParameters
 
 # ────────────────────────── our modules ─────────────────────────────
 from llm_provider import get_llm
+from guardrails import check_input, check_tool_result, check_output
 
 # ╔══════════════════════════════════════════════════════════════════╗
 # ║ 1.  Configuration                                               ║
 # ╚══════════════════════════════════════════════════════════════════╝
-CHROMA_PATH      = Path("./chroma_db")          # Where Lab 4 stored the vector DB
-COLLECTION_NAME  = "codebase"                   # Collection name from Lab 4
-TOP_K            = 3                            # Number of RAG results to retrieve
 
 # Regex for parsing LLM responses (same pattern as Labs 2 and 3)
 ACTION_RE = re.compile(r"Action:\s*(\w+)", re.IGNORECASE)
 ARGS_RE   = re.compile(r"Args:\s*(\{.*?\})(?:\s|$)", re.S | re.IGNORECASE)
 
-# MCP server subprocess configuration — starts mcp_server.py via stdio
-# instead of connecting over HTTP. The wrapper runs the same FastMCP
-# server but in stdio transport mode (stdin/stdout instead of HTTP).
-MCP_SERVER = StdioServerParameters(
-    command=sys.executable,
-    args=["mcp_stdio_wrapper.py"],
-)
+# MCP server subprocess — starts mcp_server.py via stdio instead of
+# connecting over HTTP. FastMCP's Client sees a .py path and auto-
+# starts it as a child process, talking MCP over stdin/stdout.
+MCP_SERVER = str(Path(__file__).parent / "mcp_stdio_wrapper.py")
 
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ 2.  RAG search tool (local — queries the ChromaDB from Lab 4)   ║
-# ╚══════════════════════════════════════════════════════════════════╝
-# Initialize the embedding model and database connection once at startup
-embed_fn = DefaultEmbeddingFunction()
-
-def open_collection() -> chromadb.Collection:
-    """Open the ChromaDB collection populated in Lab 4."""
-    client = chromadb.PersistentClient(
-        path=str(CHROMA_PATH),
-        settings=Settings(),
-        tenant=DEFAULT_TENANT,
-        database=DEFAULT_DATABASE,
-    )
-    return client.get_or_create_collection(COLLECTION_NAME)
-
-coll = open_collection()
-
-def search_offices(query: str) -> str:
-    """
-    Search the office vector database for relevant information.
-    This is the 'Retrieval' part of RAG — semantic search over
-    the office PDF data indexed in Lab 4.
-
-    Returns the top matching text chunks as a string.
-    """
-    query_vec = embed_fn([query])[0]
-    res = coll.query(
-        query_embeddings=[query_vec],
-        n_results=TOP_K,
-        include=["documents"],
-    )
-    docs = res["documents"][0] if res["documents"] else []
-    if not docs:
-        return "No matching office information found."
-    return "\n---\n".join(docs)
-
-# ╔══════════════════════════════════════════════════════════════════╗
-# ║ 3.  MCP result unwrapper                                        ║
+# ║ 2.  MCP result unwrapper                                        ║
 # ╚══════════════════════════════════════════════════════════════════╝
 def unwrap(obj):
     """Extract plain Python values from FastMCP result wrappers."""
@@ -124,7 +80,7 @@ def unwrap(obj):
     return obj
 
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ 4.  System prompt — tells the LLM about all available tools     ║
+# ║ 3.  System prompt — tells the LLM about all available tools     ║
 # ╚══════════════════════════════════════════════════════════════════╝
 SYSTEM = textwrap.dedent("""
 You are an office information agent. You answer questions about company
@@ -150,7 +106,8 @@ convert_c_to_f(c: float)
     Converts a Celsius temperature to Fahrenheit.
     Returns: float
 
-For each step, respond with EXACTLY these three lines:
+IMPORTANT: Respond with EXACTLY ONE step at a time — a single
+Thought/Action/Args triplet. Wait for the Observation before continuing.
 
 Thought: <your reasoning about what to do next>
 Action: <exact tool name only>
@@ -193,10 +150,11 @@ RULES:
 6. Office details and weather MUST come from tool results — do NOT invent them
 7. You may add one interesting fact about the city from your own knowledge
 8. Do NOT add extra text beyond the required format
+9. Respond with ONLY ONE Thought/Action/Args per message — NEVER plan ahead
 """).strip()
 
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ 5.  Async TAO agent loop (starts MCP server via stdio)          ║
+# ║ 4.  Async TAO agent loop (starts MCP server via stdio)          ║
 # ╚══════════════════════════════════════════════════════════════════╝
 async def _run_agent_async(prompt: str, max_steps: int = 10) -> str:
     """
@@ -204,22 +162,21 @@ async def _run_agent_async(prompt: str, max_steps: int = 10) -> str:
 
     The MCP server is started via stdio transport — the agent spawns
     mcp_stdio_wrapper.py as a child process and talks MCP protocol
-    over stdin/stdout. This is the standard production pattern.
+    over stdin/stdout. ALL tools go through MCP — the agent is a
+    pure orchestrator.
     """
+    # ── Guardrail: check user input before the LLM sees it ───────
+    is_safe, prompt = check_input(prompt)
+    if not is_safe:
+        print(f"\n⚠️  Prompt blocked by guardrails.")
+        return prompt          # prompt now holds the refusal message
+
     llm = get_llm()
 
     messages = [
         {"role": "system", "content": SYSTEM},
         {"role": "user",   "content": prompt},
     ]
-
-    # Track gathered data for the final display
-    context = {
-        "office_info": None,
-        "city": None,
-        "conditions": None,
-        "temp_f": None,
-    }
 
     print("\n" + "="*60)
     print("RAG Agent — Thought / Action / Observation")
@@ -245,20 +202,13 @@ async def _run_agent_async(prompt: str, max_steps: int = 10) -> str:
             # ── Check if the agent decided it is done ─────────────────
             if action == "done":
                 print("\n" + "="*60)
-                # Check for LLM-composed summary (v2 enhancement)
                 if "Final:" in response:
                     final = response.split("Final:", 1)[1].strip()
+                    # ── Guardrail: sanitise output before user sees it ─
+                    final = check_output(final)
                     print(f"\n{final}\n")
-                else:
-                    # Fallback to collected data
-                    print("Agent completed!\n")
-                    if context["office_info"]:
-                        print(f"Office: {context['office_info']}")
-                    if context["conditions"] and context["temp_f"] is not None:
-                        print(f"Weather: {context['conditions']}, "
-                              f"{context['temp_f']:.1f} °F")
-                    print()
-                return
+                    return final
+                return "Agent completed but no summary was generated."
 
             # ── Parse the Args ────────────────────────────────────────
             args_match = ARGS_RE.search(response)
@@ -272,40 +222,34 @@ async def _run_agent_async(prompt: str, max_steps: int = 10) -> str:
                 print(f"\nError: Invalid JSON: {e}\n")
                 break
 
-            # ── Call the tool — local (RAG) or remote (MCP) ──────────
+            # ── Call the tool via MCP ─────────────────────────────────
             print(f"\n-> Calling: {action}({json.dumps(args)})")
 
             try:
-                if action == "search_offices":
-                    # Local tool: RAG vector search
-                    result = search_offices(**args)
-                    context["office_info"] = result.split("\n")[0][:200]
-                else:
-                    # MCP tools: geocode, weather, conversion
-                    raw = await mcp.call_tool(action, args)
-                    result = unwrap(raw)
-            except ToolError as e:
-                result = f"Error: {e}"
+                raw = await mcp.call_tool(action, args)
+                result = unwrap(raw)
             except Exception as e:
                 result = f"Error: {type(e).__name__}: {e}"
 
-            # Store relevant context from MCP tool results
-            if action == "geocode_location" and isinstance(result, dict):
-                context["city"] = result.get("name")
-            elif action == "get_weather" and isinstance(result, dict):
-                context["conditions"] = result.get("conditions")
-            elif action == "convert_c_to_f" and isinstance(result, (int, float)):
-                context["temp_f"] = float(result)
-
-            # Format the observation and show it
-            if isinstance(result, dict):
+            # Format the observation
+            if isinstance(result, (dict, float, int)):
                 obs_text = json.dumps(result)
             else:
                 obs_text = str(result)
+
+            # ── Guardrail: check tool result for injected content ──
+            _safe, obs_text = check_tool_result(action, obs_text)
+            if not _safe:
+                print(f"⚠️  Tool result sanitised by guardrails.")
+
             print(f"Observation: {obs_text}\n")
 
-            # Feed the observation back to the LLM
-            messages.append({"role": "assistant", "content": response})
+            # Feed the observation back to the LLM.
+            # Truncate to the first Thought/Action/Args triplet only —
+            # some models (e.g. HF Inference) plan multiple steps at once
+            # which confuses the loop if appended in full.
+            first_step = response[:args_match.end()]
+            messages.append({"role": "assistant", "content": first_step})
             messages.append({"role": "user",
                              "content": f"Observation: {obs_text}"})
 
@@ -313,7 +257,7 @@ async def _run_agent_async(prompt: str, max_steps: int = 10) -> str:
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ 6.  Synchronous wrapper (for Gradio and command-line use)       ║
+# ║ 5.  Synchronous wrapper (for Gradio and command-line use)       ║
 # ╚══════════════════════════════════════════════════════════════════╝
 def run_agent(prompt: str, max_steps: int = 10) -> str:
     """
@@ -324,7 +268,7 @@ def run_agent(prompt: str, max_steps: int = 10) -> str:
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ 7.  Interactive loop                                             ║
+# ║ 6.  Interactive loop                                             ║
 # ╚══════════════════════════════════════════════════════════════════╝
 if __name__ == "__main__":
     print("=" * 60)
