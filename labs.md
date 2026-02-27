@@ -1,7 +1,7 @@
 # AI for App Development - Deep Dive
 ## Building and deploying AI Apps that leverage agents, MCP and RAG
 ## Session labs 
-## Revision 2.5 - 02/26/26
+## Revision 2.6 - 02/27/26
 
 **Follow the startup instructions in the README.md file IF NOT ALREADY DONE!**
 
@@ -483,7 +483,9 @@ High revenue branch
 code -d labs/common/lab5_server_solution.txt mcp_server.py
 ```
 
-![Updating the MCP server](./images/31ai49.png?raw=true “Updating the MCP server”)
+![Updating the MCP server](./images/31ai49.png?raw=true "Updating the MCP server")
+
+
 
 <br><br>
 
@@ -510,7 +512,7 @@ python mcp_server.py
 code -d labs/common/lab5_agent_solution.txt rag_agent.py
 ```
 
-![Code for rag agent](./images/31ai50.png?raw=true “Code for rag agent”)
+![Code for rag agent](./images/31ai50.png?raw=true "Code for rag agent")
 
 <br><br>
 
@@ -538,13 +540,13 @@ Tell me about HQ
 Tell me about the Southern office
 ```
 
-![Agent query about HQ](./images/31ai51.png?raw=true “Agent query about HQ”)
+![Agent query about HQ](./images/31ai51.png?raw=true "Agent query about HQ")
 
 <br><br>
 
 8. What you should see is the agent’s TAO loop in action — just like in Labs 2 and 3! The LLM will think about what to do, call `search_offices` to find relevant office data from the vector database, then geocode the city, get the weather, and convert the temperature. Each step shows the Thought, Action, and Observation. At the end, it displays the collected office and weather information. After the initial run, you can try prompts about other offices or cities mentioned in the PDF. Type *exit* when done.
 
-![Running the RAG agent](./images/31ai52.png?raw=true “Running the RAG agent”)
+![Running the RAG agent](./images/31ai52.png?raw=true "Running the RAG agent")
 
 <br><br>
 
@@ -554,7 +556,7 @@ Tell me about the Southern office
 code -d labs/common/lab5_agent_solution_v2.txt rag_agent.py
 ```
 
-![Updating the RAG agent](./images/31ai47.png?raw=true “Updating the RAG agent”)
+![Updating the RAG agent](./images/31ai47.png?raw=true "Updating the RAG agent")
 
 <br><br>
 
@@ -573,11 +575,11 @@ Tell me about HQ
 Tell me about the Southern office
 ```
 
-![Running the updated RAG agent](./images/31ai56.png?raw=true “Running the updated RAG agent”)
+![Running the updated RAG agent](./images/31ai56.png?raw=true "Running the updated RAG agent")
 
 <br><br>
 
-12. When done, you can stop the MCP server via Ctrl-C and “exit” out of the agent.
+12. When done, you can stop the MCP server via Ctrl-C and "exit" out of the agent.
 
 <p align=”center”>
 **[END OF LAB]**
