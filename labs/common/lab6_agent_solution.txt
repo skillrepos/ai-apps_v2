@@ -5,7 +5,6 @@ Lab 6: RAG-Enhanced Office Agent (Deployable)
 Evolves the RAG agent from Lab 5 to be deployment-ready:
 - Uses llm_provider for flexible LLM backend (Ollama OR HF Inference)
 - Starts the MCP server as a SUBPROCESS via stdio transport
-- ALL tools (including search_offices) now go through MCP
 - Adds guardrails for prompt-injection defence at three boundaries
 - Ready for Gradio interface (Lab 7) and HF deployment (Lab 8)
 
@@ -22,9 +21,8 @@ Key Changes from Lab 5
   separately with "python mcp_server.py"
 - This version starts the MCP server as a SUBPROCESS and connects
   via stdio transport → fully self-contained, one command to run
-- Lab 5 had search_offices as a local function in the agent →
-  now it's an MCP tool too, so the agent is a pure orchestrator
 - Lab 5 used ChatOllama directly → this uses llm_provider (Ollama or HF)
+- Adds guardrails at three boundaries: input, tool results, output
 - Adds a synchronous wrapper so Gradio can call it easily
 """
 
