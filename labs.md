@@ -1,7 +1,7 @@
 # AI for App Development - Deep Dive
 ## Building and deploying AI Apps that leverage agents, MCP and RAG
 ## Session labs 
-## Revision 2.1 - 02/26/26
+## Revision 2.3 - 02/26/26
 
 **Follow the startup instructions in the README.md file IF NOT ALREADY DONE!**
 
@@ -575,13 +575,13 @@ Tell me about the Southern office
 - Introduces an **LLM provider** layer (`llm_provider.py`) that automatically selects the right backend:
   - **Ollama** when running locally (Codespaces / laptop)
   - **HuggingFace Inference API** when deployed to HF Spaces (uses `HF_TOKEN`)
-- Moves `search_offices` into the **MCP server** — the server becomes the single source of truth for all tools.
+- Moves `search_offices` into the **MCP server** and builds the ChromaDB index on the fly from `data/offices.pdf`. The server becomes the single source of truth for all tools and their data.
 - Adds a **guardrails** module (`guardrails.py`) with regex-based prompt-injection detection at three boundaries: user input, tool results, and final output.
 - Evolves `rag_agent.py` into a **pure orchestrator** that starts the MCP server as a subprocess via stdio transport and dispatches all tools uniformly through MCP.
 
 **What it demonstrates**
 - **Provider pattern**: A single `get_llm()` function hides the complexity of choosing between local and cloud LLMs — the rest of the code never needs to know which one is running.
-- **Single source of tools**: Moving `search_offices` into the MCP server means every tool lives in one place — the agent never needs to know how tools are implemented.
+- **Single source of tools**: Moving `search_offices` into the MCP server means every tool lives in one place — the agent never needs to know how tools are implemented. The server also builds the vector index on the fly from the source PDF, so there's no pre-built database to ship.
 - **Defence in depth**: The guardrails module scans for common injection patterns at three boundaries — if an attacker tries to hijack the prompt, poison RAG data, or manipulate the output, the regex checks catch it. This is a first layer; production apps add embedding classifiers and LLM-based judges on top.
 - **Stdio MCP transport**: Instead of running the MCP server separately over HTTP, the agent spawns it as a child process and talks MCP protocol over stdin/stdout. This is the standard production pattern for embedding an MCP server in a deployment.
 
@@ -638,7 +638,7 @@ code -d labs/common/lab6_server_solution.txt mcp_server.py
 <br><br>
 
 5. Review and merge each section. The key additions to notice:
-   - **Section 3** adds ChromaDB imports and initialization — this is the same vector DB setup from Lab 4, now living in the server
+   - **Section 3** adds ChromaDB imports, initialization, and **on-the-fly indexing** — `open_collection()` checks if the database is empty and, if so, reads `data/offices.pdf` with pdfplumber and builds the vector index automatically. This means we never need to ship a pre-built database.
    - **Section 4** adds `search_offices` as a new `@mcp.tool` — semantic search over the office PDF data, returning the top matching text chunks
    - The existing weather, geocoding, and conversion tools remain unchanged
 
