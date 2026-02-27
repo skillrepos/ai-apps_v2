@@ -852,7 +852,7 @@ git clone https://huggingface.co/spaces/HF_USERID/ai-office-assistant
 cd ai-office-assistant
 ```
 
-![Cloning](./images/ae166.png?raw=true "Cloning")
+![Cloning](./images/v2app36.png?raw=true "Cloning")
 
 <br><br>
 
@@ -864,7 +864,7 @@ cd ai-office-assistant
 
 This will copy the necessary Python files (including `mcp_server.py` and `mcp_stdio_wrapper.py` for the stdio MCP connection) and the pre-built vector database, and create a `requirements.txt` and `README.md` configured for Hugging Face Spaces.
 
-![Space prep](./images/v2app35.png?raw=true "Space prep")
+![Space prep](./images/v2app37.png?raw=true "Space prep")
 
 <br><br>
 
@@ -888,7 +888,9 @@ git push
 
 11. Switch back to your Space on Hugging Face and click on the *App* link at the top. You should see that your app is in the process of building. After a few minutes, the app will be live and you can interact with it just like you did locally — but now it's running on the HuggingFace Inference API instead of Ollama!
 
+![App building](./images/v2app38.png?raw=true "App building")
 
+![App running](./images/v2app39.png?raw=true "App running")
 
 <br><br>
 
