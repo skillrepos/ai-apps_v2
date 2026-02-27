@@ -4,23 +4,22 @@ Lab 5: RAG-Enhanced Agentic Weather Agent
 ────────────────────────────────────────────────────────────────────
 A true agentic RAG workflow combining:
 - Lab 2's agent pattern (TAO loop with LLM-driven tool selection)
-- Lab 3's MCP server (weather and geocoding tools)
+- Lab 3's MCP server (weather, geocoding, and now RAG search tools)
 - Lab 4's vector database (ChromaDB with office PDF data)
 
 The LLM controls the entire workflow, deciding which tools to call
 and when to stop — just like the agents in Labs 2 and 3.
 
-Tools Available to the Agent
-----------------------------
-1. search_offices(query) → text chunks from office vector DB (local RAG)
-2. geocode_location(name) → lat/lon coordinates (MCP server)
-3. get_weather(lat, lon) → current weather in Celsius (MCP server)
-4. convert_c_to_f(c) → temperature in Fahrenheit (MCP server)
+Tools Available to the Agent (ALL via MCP server)
+--------------------------------------------------
+1. search_offices(query) → text chunks from office vector DB
+2. geocode_location(name) → lat/lon coordinates
+3. get_weather(lat, lon)  → current weather in Celsius
+4. convert_c_to_f(c)      → temperature in Fahrenheit
 
 Prerequisites
 -------------
-- ChromaDB populated: python tools/index_pdf.py (Lab 4)
-- MCP server running: python mcp_server.py (Lab 3)
+- MCP server running: python mcp_server.py (Lab 5 version with search_offices)
 """
 
 # ────────────────────────── standard libs ───────────────────────────
@@ -31,9 +30,6 @@ import textwrap
 from pathlib import Path
 
 # ────────────────────────── third-party libs ────────────────────────
-import chromadb
-from chromadb.config import Settings, DEFAULT_TENANT, DEFAULT_DATABASE
-from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
 from langchain_ollama import ChatOllama
@@ -41,24 +37,12 @@ from langchain_ollama import ChatOllama
 # ╔══════════════════════════════════════════════════════════════════╗
 # ║ 1.  Configuration                                               ║
 # ╚══════════════════════════════════════════════════════════════════╝
-CHROMA_PATH      = Path("./chroma_db")          # Where Lab 4 stored the vector DB
-COLLECTION_NAME  = "codebase"                   # Collection name from Lab 4
-MCP_ENDPOINT     = "http://127.0.0.1:8000/mcp/" # MCP server from Lab 3
-TOP_K            = 3                            # Number of RAG results to retrieve
+MCP_ENDPOINT     = "http://127.0.0.1:8000/mcp/" # MCP server from Lab 5
 
-# TODO: Set up vector DB path, collection name, embedding model,
-#       MCP endpoint, and regex patterns for parsing LLM responses
+# TODO: Set up regex patterns for parsing LLM responses
 
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ 2.  RAG search tool (local — queries the ChromaDB from Lab 4)   ║
-# ╚══════════════════════════════════════════════════════════════════╝
-
-# TODO: Initialize embedding model and ChromaDB collection
-# TODO: Implement search_offices(query) that the agent can call
-#       to search the office vector database from Lab 4
-
-# ╔══════════════════════════════════════════════════════════════════╗
-# ║ 3.  MCP result unwrapper                                        ║
+# ║ 2.  MCP result unwrapper                                        ║
 # ╚══════════════════════════════════════════════════════════════════╝
 def unwrap(obj):
     """Extract plain Python values from FastMCP result wrappers."""
@@ -100,10 +84,10 @@ Args: {}
 """).strip()
 
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ 5.  TAO agent loop — the LLM decides which tools to call        ║
+# ║ 4.  TAO agent loop — the LLM decides which tools to call        ║
 # ╚══════════════════════════════════════════════════════════════════╝
 async def run(prompt: str, max_steps: int = 10) -> None:
-# Run the agentic RAG loop where the LLM drives teh workflow.   
+# Run the agentic RAG loop where the LLM drives the workflow.
 
     # Track gathered data for the final display
     context = {
@@ -139,18 +123,20 @@ async def run(prompt: str, max_steps: int = 10) -> None:
                 print(f"\nError: Invalid JSON: {e}\n")
                 break
 
-            # ── Call the tool — local (RAG) or remote (MCP) ──────────
+            # ── Call the tool via MCP ─────────────────────────────────
             print(f"\n-> Calling: {action}({json.dumps(args)})")
 
             try:
-# call apprpriate tool
+# call tool via MCP
             except ToolError as e:
                 result = f"Error: {e}"
             except Exception as e:
                 result = f"Error: {type(e).__name__}: {e}"
 
-            # Store relevant context from MCP tool results
-            if action == "geocode_location" and isinstance(result, dict):
+            # Store relevant context from tool results
+            if action == "search_offices" and isinstance(result, str):
+                context["office_info"] = result.split("\n")[0][:200]
+            elif action == "geocode_location" and isinstance(result, dict):
                 context["city"] = result.get("name")
             elif action == "get_weather" and isinstance(result, dict):
                 context["conditions"] = result.get("conditions")
@@ -158,7 +144,7 @@ async def run(prompt: str, max_steps: int = 10) -> None:
                 context["temp_f"] = float(result)
 
             # Format the observation and show it
-            if isinstance(result, dict):
+            if isinstance(result, (dict, float, int)):
                 obs_text = json.dumps(result)
             else:
                 obs_text = str(result)
@@ -172,7 +158,7 @@ async def run(prompt: str, max_steps: int = 10) -> None:
         print(f"\nReached maximum steps ({max_steps}).\n")
 
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ 6.  Interactive loop                                             ║
+# ║ 5.  Interactive loop                                             ║
 # ╚══════════════════════════════════════════════════════════════════╝
 if __name__ == "__main__":
     print("="*60)
