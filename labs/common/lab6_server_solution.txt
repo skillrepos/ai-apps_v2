@@ -23,14 +23,16 @@ Key Changes from Lab 3
 from __future__ import annotations
 
 # ── stdlib ──────────────────────────────────────────────────────────
+import re
 import time
 from pathlib import Path
-from typing import Final
+from typing import Final, List
 
 # ── 3rd-party ───────────────────────────────────────────────────────
 import chromadb
 from chromadb.config import Settings, DEFAULT_TENANT, DEFAULT_DATABASE
 from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
+import pdfplumber
 import requests
 from fastmcp import FastMCP
 
@@ -68,20 +70,53 @@ TRANSIENT_CODES = {429, 500, 502, 503, 504}  # HTTP codes worth retrying
 # ║ 3.  ChromaDB setup for office RAG search (NEW in Lab 6)          ║
 # ╚══════════════════════════════════════════════════════════════════╝
 CHROMA_PATH     = Path(__file__).parent / "chroma_db"
+PDF_DIR         = Path(__file__).parent / "data"
 COLLECTION_NAME = "codebase"
 TOP_K           = 3
 
 embed_fn = DefaultEmbeddingFunction()
 
+# ── Regex for splitting PDF text into lines ──────────────────────────
+LINE_RE = re.compile(r"[^\S\r\n]*\r?\n[^\S\r\n]*")
+
+def _extract_lines(path: Path) -> List[str]:
+    """Extract every non-blank line from a PDF file."""
+    lines: List[str] = []
+    with pdfplumber.open(path) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text() or ""
+            for raw_line in LINE_RE.split(text):
+                line = raw_line.strip()
+                if line:
+                    lines.append(line)
+    return lines
+
+def _build_index(coll: chromadb.Collection) -> None:
+    """Index all PDFs in data/ into the ChromaDB collection."""
+    pdf_files = sorted(PDF_DIR.glob("*.pdf"))
+    for pdf_path in pdf_files:
+        print(f"  Indexing {pdf_path.name}...")
+        for idx, line in enumerate(_extract_lines(pdf_path)):
+            coll.add(
+                ids=[f"{pdf_path.name}-{idx}"],
+                documents=[line],
+                metadatas=[{"path": str(pdf_path), "chunk_index": idx}],
+            )
+    print(f"  Indexed {coll.count()} chunks.")
+
 def open_collection() -> chromadb.Collection:
-    """Open the ChromaDB collection populated in Lab 4."""
+    """Open the ChromaDB collection, building the index if empty."""
     client = chromadb.PersistentClient(
         path=str(CHROMA_PATH),
         settings=Settings(),
         tenant=DEFAULT_TENANT,
         database=DEFAULT_DATABASE,
     )
-    return client.get_or_create_collection(COLLECTION_NAME)
+    coll = client.get_or_create_collection(COLLECTION_NAME)
+    if coll.count() == 0:
+        print("ChromaDB empty — building index from PDFs...")
+        _build_index(coll)
+    return coll
 
 coll = open_collection()
 
