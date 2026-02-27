@@ -546,9 +546,9 @@ Tell me about the Southern office
 
 <br><br>
 
-8. What you should see is the agent’s TAO loop in action — just like in Labs 2 and 3! The LLM will think about what to do, call `search_offices` to find relevant office data from the vector database, then geocode the city, get the weather, and convert the temperature. Each step shows the Thought, Action, and Observation. At the end, it displays the collected office and weather information. After the initial run, you can try prompts about other offices or cities mentioned in the PDF. Type *exit* when done.
+8. What you should see is the agent’s TAO loop in action — just like the earlier agent runs. The LLM will think about what to do, call `search_offices` to find relevant office data from the vector database, then geocode the city, get the weather, and convert the temperature. Each step shows the Thought, Action, and Observation. At the end, it displays the weather information for the city the office is located in. After the initial run, you can try prompts about other offices or cities mentioned in the PDF. Type *exit* when done.
 
-![Running the RAG agent](./images/31ai52.png?raw=true "Running the RAG agent")
+![Running the RAG agent](./images/v2app46.png?raw=true "Running the RAG agent")
 
 <br><br>
 
