@@ -540,7 +540,7 @@ Tell me about HQ
 Tell me about the Southern office
 ```
 
-![Agent query about HQ](./images/31ai51.png?raw=true "Agent query about HQ")
+![Agent query about HQ](./images/v2app43.png?raw=true "Agent query about HQ")
 
 (Troubleshooting: If you see an error about connection refused, the local Ollama server might have been stopped at some point.  Run the command `ollama serve &` again.)
 
@@ -552,13 +552,13 @@ Tell me about the Southern office
 
 <br><br>
 
-9. While the agent works well and demonstrates true agentic behavior, the final output just displays the raw collected data. Let’s enhance the agent so that when it finishes, the LLM composes a friendly, natural language summary that includes office details, weather, and an interesting fact about the city. To see and make the changes you can do the usual diff and merge using the command below.
+9. While the agent works well and demonstrates true agentic behavior, the final output just displays the simple weather data. Let’s enhance the agent so that when it finishes, the LLM composes a friendly, natural language summary that includes office details, weather, and an interesting fact about the city. To see and make the changes you can do the usual diff and merge using the command below. (You can leave the server running during this and just make the changes to the agent.)
 
 ```
 code -d labs/common/lab5_agent_solution_v2.txt rag_agent.py
 ```
 
-![Updating the RAG agent](./images/31ai47.png?raw=true "Updating the RAG agent")
+![Updating the RAG agent](./images/v2app44.png?raw=true "Updating the RAG agent")
 
 <br><br>
 
@@ -577,7 +577,7 @@ Tell me about HQ
 Tell me about the Southern office
 ```
 
-![Running the updated RAG agent](./images/31ai56.png?raw=true "Running the updated RAG agent")
+![Running the updated RAG agent](./images/v2app45.png?raw=true "Running the updated RAG agent")
 
 <br><br>
 
