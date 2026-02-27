@@ -889,7 +889,7 @@ git push
 
 <br><br>
 
-11. Switch back to your Space on Hugging Face and click on the *App* link at the top. You should see that your app is in the process of building. After a few minutes, the app will be live and you can interact with it just like you did locally — but now it's running on the HuggingFace Inference API instead of Ollama!
+11. Switch back to your Space on Hugging Face and click on the *App* link at the top. You should see that your app is in the process of building. After a few minutes, the app will be live and you can interact with it just like you did locally — but now it's running on the HuggingFace Spaces platform, and using a larger AI model served through that platform. You should see faster response times as well.
 
 ![App building](./images/v2app38.png?raw=true "App building")
 
