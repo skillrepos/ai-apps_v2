@@ -18,7 +18,7 @@
 #   - guardrails.py       (Prompt-injection detection)
 #   - mcp_server.py       (MCP weather/geocoding/RAG tools)
 #   - mcp_stdio_wrapper.py (Starts MCP server in stdio transport mode)
-#   - chroma_db/          (Pre-built vector database from Lab 4)
+#   - data/offices.pdf    (Source PDF — indexed into ChromaDB on first run)
 #   - requirements.txt    (Python dependencies for HF Spaces)
 #   - README.md           (HF Spaces metadata and description)
 #   - .gitignore          (Git ignore rules)
@@ -64,15 +64,16 @@ cp "$PROJECT_ROOT/mcp_server.py" "$OUTPUT_DIR/"
 cp "$PROJECT_ROOT/mcp_stdio_wrapper.py" "$OUTPUT_DIR/"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Copy pre-built vector database
+# Copy PDF data (the MCP server indexes it on first run)
 # ─────────────────────────────────────────────────────────────────────────────
-echo -e "${GREEN}Copying vector database...${NC}"
+echo -e "${GREEN}Copying PDF data...${NC}"
 
-if [ -d "$PROJECT_ROOT/chroma_db" ]; then
-    cp -r "$PROJECT_ROOT/chroma_db" "$OUTPUT_DIR/"
-    echo "  Copied chroma_db/"
+mkdir -p "$OUTPUT_DIR/data"
+if [ -f "$PROJECT_ROOT/data/offices.pdf" ]; then
+    cp "$PROJECT_ROOT/data/offices.pdf" "$OUTPUT_DIR/data/"
+    echo "  Copied data/offices.pdf"
 else
-    echo -e "${YELLOW}  Warning: chroma_db/ not found. Run 'python tools/index_pdf.py' first.${NC}"
+    echo -e "${YELLOW}  Warning: data/offices.pdf not found.${NC}"
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -92,6 +93,9 @@ chromadb>=1.0.0
 
 # Embeddings model
 sentence-transformers>=5.0.0
+
+# PDF text extraction (for on-the-fly indexing)
+pdfplumber>=0.10.0
 
 # MCP framework (server + stdio transport)
 fastmcp>=2.0.0
@@ -152,7 +156,7 @@ Without `HF_TOKEN`, the LLM will not work.
 - "West Coast office details"
 
 ---
-*Built with AI 3-in-1: Agents, RAG and Local Models*
+*Built for AI for App Development Workshop*
 EOF
 
 # ─────────────────────────────────────────────────────────────────────────────
