@@ -60,6 +60,8 @@ def unwrap(obj):
     if isinstance(obj, list) and len(obj) == 1:
         return unwrap(obj[0])
     if isinstance(obj, dict):
+        if len(obj) == 1:
+            return unwrap(list(obj.values())[0])
         numeric_vals = [v for v in obj.values() if isinstance(v, (int, float))]
         if len(numeric_vals) == 1:
             return numeric_vals[0]
