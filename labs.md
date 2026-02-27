@@ -768,7 +768,13 @@ python gradio_app.py
 
 4. When this starts, you should see a pop-up in the lower right that has a button to click to open the app. Click that to open it in a new browser tab. If it opens a new codespace instance instead, close that tab, go back, and try again.
 
-Alternatively, switch to the *PORTS* tab (next to *TERMINAL*) in the codespace, find the row for port *7860*, hover over the second column, and click on the globe icon.
+![Opening via popup](./images/v2app27.png?raw=true "Opening via popup")
+
+
+If you miss the popup, you can also open the app by switching to the *PORTS* tab (next to *TERMINAL*) in the codespace, finding the row for port *7860*, hovering over the second column, and clicking on the globe icon.
+
+![Opening via ports row](./images/v2app28.png?raw=true "Opening via ports row")
+
 
 <br><br>
 
@@ -782,7 +788,7 @@ Tell me about HQ
 
 <br><br>
 
-6. You should see the agent process your query and return a natural language summary with office details and live weather. Try the example buttons at the bottom of the chat area for quick queries.
+6. You should see the agent process your query and return a natural language summary with office details and live weather. Try the example buttons at the bottom of the chat area for quick queries. (**NOTE**: Because of all the processing that happens in the background, you will probably have to wait up to 90 seconds on the initial query while the process starts the server, etc. During this time, you can switch back to the terminal and see the processing.)
 
 ![Gradio interface](./images/v2app29.png?raw=true "Gradio interface")
 
