@@ -465,7 +465,7 @@ High revenue branch
 - **ALL tools go through MCP** — the agent is a pure orchestrator and never touches the database or APIs directly.
 
 **What it demonstrates**
-- A complete “AI 3-in-1” agentic workflow:
+- A complete agentic workflow:
   - **Local model** (LLM via Ollama drives all decisions),
   - **RAG retrieval** (ChromaDB vector search as an MCP tool),
   - **MCP tool use** (weather/geocoding + RAG search, all via MCP server).
