@@ -845,7 +845,7 @@ Tell me about HQ
 
 <br><br>
 
-7. Now, in the root of the project in a terminal, run the following commands to clone the space. Replace *HF_USERID* with your actual Hugging Face userid. (If you named your space something other than "ai-office-assistant", replace that in the commands below.)
+7. Now, switch back to your codespace. In the root of the project `/workspaces/ai-apps_v2` in a terminal, run the following commands to clone the new space. **Replace *HF_USERID* with your actual Hugging Face userid. (If you named your space something other than "ai-office-assistant", also replace that in the commands below.)**
 
 ```
 git clone https://huggingface.co/spaces/HF_USERID/ai-office-assistant
@@ -868,17 +868,20 @@ This will copy the necessary Python files (including `mcp_server.py` and `mcp_st
 
 <br><br>
 
-9. Now, do the usual Git commands to push your files to the new space:
+9. Now, in the `ai-office-assistant` directory (or whatever you named it) do the usual Git commands to commit your files to the new space:
 
 ```
 git add .
 git commit -m "initial commit"
-git push
 ```
 
 <br><br>
 
-10. When you run `git push`, VS Code/the codespace will prompt you at the *top* of the screen for your Hugging Face username. Enter your username and hit *Enter*. You will then be prompted for your password — **this is your Hugging Face token value**. Copy and paste the token value into the box.
+10. Next, we will do the push to get the files into the Git repo for the Hugging Face space. When you run `git push`, VS Code/the codespace will prompt you at the *top* of the screen for your Hugging Face username. Enter your username and hit *Enter*. **You will then be prompted for your password — this is your Hugging Face token string.** Copy and paste **the token** into the password entry box.
+
+```
+git push
+```
 
 ![Enter HF username](./images/aia-3-53.png?raw=true "Enter HF username")
 
