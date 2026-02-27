@@ -723,7 +723,7 @@ In production, this log would feed into a monitoring system (e.g. Datadog, Splun
 </br></br>
 
 
-**Lab 7 - Adding a Gradio Interface**
+**Lab 7 - Adding a Web Interface**
 
 **Purpose: In this lab, we'll add a professional web interface using Gradio on top of our deployable agent.**
 
