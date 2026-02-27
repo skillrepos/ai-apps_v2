@@ -454,7 +454,7 @@ High revenue branch
 
 **Lab 5 - Using RAG with Agents**
 
-**Purpose: In this lab, we’ll move the vector search into the MCP server (best practice: all tools in one place) and build an agent that combines RAG, weather data, and LLM-driven decisions.**
+**Purpose: In this lab, we’ll add the vector search into the MCP server and build an agent that combines RAG, MCP tool calls, and LLM-driven decisions.**
 
 ---
 
@@ -477,13 +477,13 @@ High revenue branch
 
 ### Steps
 
-1. For this lab, we’re going to move the RAG search into the MCP server and build an agent that uses it alongside the weather tools — all driven by the LLM through a TAO loop (like Labs 2 and 3). First, let’s add `search_offices` to the MCP server. Open the diff view:
+1. For this lab, we’re going to add the RAG search into the MCP server and build an agent that uses it alongside the weather tools — all driven by the LLM through a TAO loop (like Labs 2 and 3). First, let’s add `search_offices` to the MCP server. Open the diff view:
 
 ```
 code -d labs/common/lab5_server_solution.txt mcp_server.py
 ```
 
-![Updating the MCP server](./images/31ai49.png?raw=true "Updating the MCP server")
+![Updating the MCP server](./images/v2app41.png?raw=true "Updating the MCP server")
 
 
 
@@ -506,26 +506,26 @@ python mcp_server.py
 
 <br><br>
 
-4. We have a starter file for the new agent in [**rag_agent.py**](./rag_agent.py). In a separate terminal, open the diff view to merge in the agent code. Note how this agent sends **all four tools through MCP** — there’s no local RAG code in the agent at all. The agent is a pure orchestrator.
+4. We have a starter file for the new agent in [**rag_agent.py**](./rag_agent.py). In a split/separate terminal, open the diff view to merge in the agent code. Note how this agent call all four tools through MCP. The agent is a pure orchestrator.
 
 ```
 code -d labs/common/lab5_agent_solution.txt rag_agent.py
 ```
 
-![Code for rag agent](./images/31ai50.png?raw=true "Code for rag agent")
+![Code for rag agent](./images/v2app42.png?raw=true "Code for rag agent")
 
 <br><br>
 
 5. Review and merge each section. Key things to notice:
-   - **Section 1 – Configuration**: just the MCP endpoint URL and regex patterns — no ChromaDB, no local database paths
+   - **Section 1 – Configuration**: just the MCP endpoint URL and regex patterns 
    - **Section 3 – System prompt**: describes all four tools to the LLM with examples of the Thought/Action/Args format
-   - **Section 4 – TAO loop**: every tool call goes through `await mcp.call_tool(action, args)` — uniform dispatch, no special cases
+   - **Section 4 – TAO loop**: (near last change) every tool call goes through `await mcp.call_tool(action, args)` — uniform dispatch, no special cases
 
    When finished merging, close the tab to save.
 
 <br><br>
 
-6. Start the new agent:
+6. Start the new agent: (**NOTE: This may take a long time to start as everything gets ready**)
 
 ```
 python rag_agent.py
@@ -541,6 +541,8 @@ Tell me about the Southern office
 ```
 
 ![Agent query about HQ](./images/31ai51.png?raw=true "Agent query about HQ")
+
+(Troubleshooting: If you see an error about connection refused, the local Ollama server might have been stopped at some point.  Run the command `ollama serve &` again.)
 
 <br><br>
 
